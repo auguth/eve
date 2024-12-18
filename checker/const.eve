@@ -1,0 +1,13 @@
+pub struct ConstInfo
+  vec[u8] ConstEncoded
+  str ConstContext
+
+pub struct ConstPair
+  str ConstName
+  ConstInfo ConstValue
+
+
+pub fn ConstBlock(vec[str] WordList, u64 Index)
+  
+
+

@@ -1,0 +1,269 @@
+// Block Module for Eve Checker 
+   Licensed under GNU GPL v2.0 
+   Copyright @ Auguth Research Foundation, 2024
+   Primary Author : joby@auguth.org
+   The Block Module is responsible for caling the statement specifc functions 
+   across the eve checker. It acts as a entrypoint for deciding which checker 
+   functions to call. As each individual checker functions e.g., constant, enums, 
+   structures, functions, etc can generate expected code and cross-checks with the 
+   given eve module.//
+
+use const, struct, enum, function
+
+% Here a Context refers to a string literal which explains the 
+  block of code either a scope or an individual instruction or an operation.
+  A context can only exist if its code block exists. % 
+pub const str Context = "%"
+
+% Here Exposure tells if a Constant/TypeDeclaration i.e., Type Alias or 
+  Data Structure/Function can be imported by other modules i.e., exposed 
+  to other modules utilizing the code block. Can be Public or Private. %
+pub const str PubExposure = "pub"
+
+% Similar to PubExposure. Here the keyword is provided for private i.e., 
+  cannot be utilized by modules which imports them. Provides isoltation. %
+pub const str PrivExposure = "priv"
+
+% The use keyword specifies that the current module is going to utilize the publicly 
+  exposed Constants,TypeDeclarations, or Functions. The use keyword is followed by the 
+  eve module name which is constrained to lowercase letters, underscore "_" and dash "-". 
+  The used or imported module must be located in the same directory of the current module 
+  or can be present in a directory located in the directory where current module resides. 
+  The use keyword can be extended with the dot "." keyword which specifies the directory 
+  name, which also has the naming convention similar to the module naming. Hence the use 
+  keyword can traverse directories from the current module's path to import modules %
+pub const str Use = "use"
+
+% The Comment keyword specifies a file comment which is advised to be only written on top 
+  of the module and should not be linked with any code blocks. It is utilized for storing 
+  any additional meta-data of the eve module such as licenses, copyright, general information, 
+  higher level understanding, etc %
+pub const str Comment = "//"
+
+%  %
+pub const str Constant = "const"
+pub const str Alias = "alias"
+pub const str Alias = "enum"
+pub const str Alias = "struct"
+pub const str Alias = "fn"
+
+
+pub enum Pair
+  ConstPair NewConstPair
+
+pub struct SyntaxInfo
+  ConstMap Constants
+  FunctionMap Functions
+  TypeDeclMap TypeDeclarations
+
+pub struct $Module 
+  SyntaxInfo PubBlocks
+  SyntaxInfo PrivBlocks
+  UseInfo ImportMods
+  FileInfo FileComments
+
+priv fn BlockRecursion(vec[str] WordList, u32 Index, $Module)--> $Module 
+  call: BlockDecision(WordList, Index)
+    pass: Pair NewPair, u32 ReturnIndex, bool IsPub 
+      call: AddPairToModule(NewPair,IsPub,$Module)
+        pass: $Module 
+          make: u32 Length = len of WordList
+          cond: if >(Length,ReturnIndex)
+                  recr: WordList, ReturnIndex  
+                    pass: Pair RecrPair, u32 NewReturnIndex, bool RecrIsPub
+                      call: AddPairToModule(RecrPair,RecrIsPub,$Module)
+                        pass: $Module 
+                          retn $Module
+                        fail: u64 ErrorIndex, str ErrorMessage
+                          thrw: ErrorIndex, ErrorMessage
+                    fail: u32 ErrorIndex, str ErrorMessage
+                      thrw: ErrorIndex, ErrorMessage
+                else 
+                  retn: $Module
+        fail: u64 ErrorIndex, str ErrorMessage
+          thrw: ErrorIndex, ErrorMessage
+    fail: u32 ErrorIndex, str ErrorMessage
+      thrw: ErrorIndex, ErrorMessage
+
+
+% This is the StateFunction which adds a pair to the module disk file %
+priv fn AddPairToModule(Pair NewPair, bool IsBool, $Module)--> $Module
+
+
+priv fn BlockDecision(vec[str] WordList, u32 Index)--> Pair,u32,bool 
+  asgn: CurrentWord = Index of WordList
+    pass:
+      cond: match CurrentWord
+              Context
+                call: ContextBlock(WordList, Index) 
+                  pass: Pair NewPair, u32 ReturnIndex
+                    make: bool IsPub = true 
+                    retn: NewPair, ReturnIndex, IsPub
+                  fail: u32 ErrorIndex, str ErrorMessage 
+                    thrw: ErrorIndex, ErrorMessage
+              |(PubExposure,PrivExposure)
+                make: str EmptyContext = ""
+                call: CodeBlock(WordList, Index, EmptyContext)
+                  pass: Pair NewPair, u32 ReturnIndex
+                    if ==(CurrentWord,PubExposure)
+                      make: bool IsPub = true 
+                      retn: NewPair, ReturnIndex, IsPub
+                    else 
+                      make: bool IsPub = false 
+                      retn: NewPair, ReturnIndex, IsPub
+                  fail: u32 ErrorIndex, str ErrorMessage 
+                    thrw: ErrorIndex, ErrorMessage
+              Use
+                make: str EmptyContext = ""
+                make: bool IsPub = true
+                call: UseBlock(WordList, Index, EmptyContext)
+                  pass: Pair NewPair, u32 ReturnIndex
+                    retn: NewPair, ReturnIndex, IsPub
+                  fail: u32 ErrorIndex, str ErrorMessage 
+                    thrw: ErrorIndex, ErrorMessage
+              Comment 
+                make: bool IsPub = true
+                call: CommentBlock(WordList, Index)
+                  pass: Pair NewPair, u32 ReturnIndex
+                    retn: NewPair, ReturnIndex, IsPub
+                  fail: u32 ErrorIndex, str ErrorMessage 
+                    thrw: ErrorIndex, ErrorMessage
+              default
+                make: str ErrorMessage = "Undefined Keyword {CurrentWord} at Word Index {Index}.
+                      Requires Either of these keywords {Context}, {PubExposure}, {PrivExposure} or {Comment}" 
+                thrw: Index, ErrorMessage
+    fail:
+      make: str ErrorMessage = "Requires Words, But Couldn't find any"
+      thrw: Index, ErrorMessage
+
+
+priv fn ContextBlock (vec[str] WordList, u32 Index)--> Pair,u32,bool 
+  make: str UnexpectedErrorMessage = "Unexpected Error Building the Context at {Index}"
+  call: FindContextEnd(WordList, Index)
+    pass: u32 EndIndex 
+      oper: u32 StartIndex = ++(Index)
+        pass:
+          oper: u32 FinishIndex = --(EndIndex)
+            pass:
+              asgn: ContextSlice = StartIndex to FinishIndex of WordList
+                pass:
+                  call: str BlockContext = CombineStringVector(ContextSlice)
+                    some:
+                      oper: u32 NewIndex = ++(EndIndex)
+                        pass:
+                          asgn: CurrentWord = NewIndex of WordList
+                            pass:
+                              cond: match CurrentWord
+                                      Context
+                                        make: str ErrorMessage = "Combine Contexts {Index} and {NewIndex}"
+                                        thrw: NewIndex, ErrorMessage
+                                      |(PubExposure,PrivExposure)
+                                        call: CodeBlock(WordList, NewIndex, BlockContext)
+                                          pass: Pair NewPair, u32 ReturnIndex
+                                            if ==(CurrentWord,PubExposure)
+                                              make: bool IsPub = true 
+                                              retn: NewPair, ReturnIndex, IsPub
+                                            else 
+                                              make: bool IsPub = false 
+                                              retn: NewPair, ReturnIndex, IsPub
+                                          fail: u32 ErrorIndex, str ErrorMessage
+                                            thrw: ErrorIndex, ErrorMessage
+                                      Use
+                                        make: bool IsPub = true 
+                                        call: UseBlock(WordList, NewIndex, BlockContext)
+                                          pass: Pair NewPair, u32 ReturnIndex
+                                            retn: NewPair, ReturnIndex, IsPub
+                                          fail: u32 ErrorIndex, str ErrorMessage
+                                            thrw: ErrorIndex, ErrorMessage
+                                      default
+                                        make: str ErrorMessage = "Undefined Keyword {CurrentWord} at {NewIndex}" 
+                                        thrw: Index, ErrorMessage
+                            fail:
+                              make: str ErrorMessage = "Context at {Index} requires Link to Code"
+                              thrw: NewIndex, ErrorMessage
+                        fail 
+                          make: str ErrorMessage = "Maximum Words Per Module Reached at {Index}." 
+                          thrw: EndIndex, ErrorMessage
+                    none:
+                      thrw: Index, UnexpectedErrorMessage
+                fail:
+                  thrw: Index, UnexpectedErrorMessage
+            fail:     
+              thrw: Index, UnexpectedErrorMessage
+        fail:          
+          thrw: Index, UnexpectedErrorMessage
+    fail: u32 ErrorIndex, str ErrorMessage 
+      thrw: ErrorIndex, ErrorMessage
+
+priv fn FindContextEnd(vec[str] WordList, u32 Index)--> u32 
+  oper: u32 NewIndex = ++(Index)
+    pass:
+      asgn: CurrentWord = NewIndex of WordList
+        pass:
+            cond: if (==(CurrentWord,Context))
+                    retn: NewIndex
+                  else
+                    recr: WordList, NewIndex
+                      pass: u32 EndIndex
+                        retn: EndIndex
+                      fail: u32 ErrorIndex, str ErrorMessage 
+                        thrw: ErrorIndex, ErrorMessage
+        fail:
+          make: str ErrorMessage = "Unfilled Context at {Index}"
+          thrw: Index, ErrorMessage
+    fail 
+      make: str ErrorMessage = "Maximum Words Per Module Reached at {Index}." 
+      thrw: Index, ErrorMessage
+
+priv fn CodeBlock(vec[str] WordList, u32 Index, str BlockContext)--> Pair, u32
+oper: u32 NewIndex = ++(Index)
+  pass:
+    asgn: CurrentWord = NewIndex of WordList
+      pass:
+        cond: match CurrentWord
+                Constant
+                  call: ConstBlock(WordList, Index, BlockContext)
+                    pass: Pair NewPair, u32 ReturnIndex
+                      retn: NewPair, ReturnIndex
+                    fail: u32 ErrorIndex, str ErrorMessage 
+                      thrw: ErrorIndex, ErrorMessage
+                Alias 
+                  call: AliasBlock(WordList, Index, BlockContext)
+                    pass: Pair NewPair, u32 ReturnIndex
+                      retn: NewPair, ReturnIndex
+                    fail: u32 ErrorIndex, str ErrorMessage 
+                      thrw: ErrorIndex, ErrorMessage
+                Enum 
+                  call: EnumBlock(WordList, Index, BlockContext)
+                    pass: Pair NewPair, u32 ReturnIndex
+                      retn: NewPair, ReturnIndex
+                    fail: u32 ErrorIndex, str ErrorMessage 
+                      thrw: ErrorIndex, ErrorMessage
+                Struct
+                  call: StructBlock(WordList, Index, BlockContext)
+                    pass: Pair NewPair, u32 ReturnIndex
+                      retn: NewPair, ReturnIndex
+                    fail: u32 ErrorIndex, str ErrorMessage 
+                      thrw: ErrorIndex, ErrorMessage
+                Function
+                  call: FunctionBlock(WordList, Index, BlockContext)
+                    pass: Pair NewPair, u32 ReturnIndex
+                      retn: NewPair, ReturnIndex
+                    fail: u32 ErrorIndex, str ErrorMessage 
+                      thrw: ErrorIndex, ErrorMessage
+                default
+                  make: str ErrorMessage = "Undefined Keyword {CurrentWord} at {NewIndex}" 
+                  thrw: NewIndex, ErrorMessage
+      fail:
+        make: str ErrorMessage = "Undefined Keyword {CurrentWord} at {NewIndex}" 
+        thrw: NewIndex, ErrorMessage
+  fail:
+    make: str ErrorMessage = "Maximum Words Per Module Reached at {Index}." 
+    thrw: Index, ErrorMessage
+
+priv fn CommentBlock(vec[str] WordList, u32 Index) --> Pair, u32
+  find the next comment end, return as a Pair  
+
+% At Last only UseBlock %
+priv fn UseBlock(vec[str] WordList, u32 Index, str BlockContext) --> Pair, u32
+
