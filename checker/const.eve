@@ -1,3 +1,9 @@
+use expect 
+
+priv const str Constant = "const"
+priv const str PubExposure = "pub"
+priv const str PrivExposure = "priv"
+
 pub struct ConstInfo
   vec[u8] ConstEncoded
   str ConstContext
@@ -7,7 +13,52 @@ pub struct ConstPair
   ConstInfo ConstValue
 
 
-pub fn ConstBlock(vec[str] WordList, u64 Index)
-  
+pub fn ConstBlock(vec[str] WordList, u32 Index, str Context)--> ConstPair, u32 
+  asgn: CurrentWord = Index of WordList
+    make: str ErrorMessage = "Invalid Index Provided"
+    thrw: Index, ErrorMessage
+  cond: ==(CurrentWord,|(PubExposure,PrivExposure))
+    make: str ErrorMessage = "Undefined Keyword {CurrentWord} at {Index}. 
+          Expects {PubExposure} or {PrivExposure}" 
+    thrw: Index, ErrorMessage
+  oper: u32 NewIndex = ++(Index)
+    make: str ErrorMessage = "Maximum Words Per Module Reached at {Index}." 
+    thrw: Index, ErrorMessage
+  asgn: NewWord = NewIndex of WordList
+    make: str ErrorMessage = "Unfilled Code at {Index}"
+    thrw: Index, ErrorMessage
+  cond: ==(NewWord, Constant)
+    make: str ErrorMessage = "Undefined Keyword {NewWord} at {NewIndex}. 
+          Expects {Constant}" 
+    thrw: Index, ErrorMessage
+  make: u32 AddToIndex = 4
+  oper: u32 EndIndex = +(NewIndex,AddToIndex)
+    make: str ErrorMessage = "Maximum Words Per Module Reached at {NewIndex}." 
+    thrw: NewIndex, ErrorMessage
+  asgn: Sentence = Index to EndIndex of WordList
+    make: str ErrorMessage = "Unfilled Code at {NewIndex}"
+    thrw: NewIndex, ErrorMessage
+  call: ExpectConstant(Sentence)
+    fail: str ErrorMessage
+    oper: u32 RetErrIndex = +(Index,ErrorIndex) 
+      thrw: Index, ErrorMessage
+    thrw: RetErrIndex, ErrorMessage
+  pass: ConstPair RetConstPair, u32 EndIndex
+  retn: RetConstPair, EndIndex
+
+
+priv fn ExpectConstant(vec[str] Sentence, u32 Index)--> ConstPair
+  call: bool Result = Validate(Sentence)
+  cond: ==(Result, true)
+    ///fail
+  make: u32 TypeIndex = 2
+  make: u32 TypeDefIndex = 3 
+  make: u32 TypeDefValueIndex = 5
+  call: TraverseBlock(Senetence, TypeIndex)
+    none: 
+      make: str ErrorMessage = "Cannot Find the Block Tree"
+      thrw: ErrorMessage
+  call:
+
 
 

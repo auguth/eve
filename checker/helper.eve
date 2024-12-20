@@ -1,5 +1,8 @@
 
-priv fn EveToStrAry(str FilePath)-->vec[str]
+pub fn EveToStrAry(str FilePath)-->vec[str] or none
   % Only for Comments have to replace new line with bounds, For Context it has to be bounded pre-check
   % some or none
+  % break can be whitespace or new line, but in cases where comma is expected, have to find in the last character of word 
+
+pub fn CombineVectorString(vec[str] StringList) --> str or none
 

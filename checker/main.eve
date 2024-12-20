@@ -6,25 +6,24 @@
    and provides the Module's Abstract Syntax Data Structure (ASDS)
    Later the ASDS can be utilized for compilation, transpilation, analysis, etc //
 
-% Imports helper Functions module and Block Module %
 use helper, block
 
-% Eve Check Command Begins with Calling the below function %
 pub fn Main 
- % get the file path %
- call: vec[str] WordList = EveToStrAry(str FilePath)
-    some:
-      make: usize Length = len of WordList
-      make: usize Index = 0
-      if >(Length,Index)
-        % create new empty table $Module%
-        call: BlockRecursion(WordList, Index)
-          pass: $Module 
-           % print check successful %
-          fail: usize ErrorIndex, str ErrorMessage
-           % print ErrorMessage  %
+  % get the file path %
+  call: vec[str] WordList = EveToStrAry(str FilePath)
     none:
-      else
-        make: str ErrorMessage = "Empty .eve Module"
-       % print ErrorMessage 
+    make: str ErrorMessage = "Empty .eve Module"
+    % print ErrorMessage 
+  some:
+  make: usize Length = len of WordList
+  make: usize Index = 0
+  cond: >(Length,Index)
+    make: str ErrorMessage = "Empty .eve Module"
+    % print ErrorMessage 
+  % create new empty table $Module%
+  call: BlockRecursion(WordList, Index)
+    fail: usize ErrorIndex, str ErrorMessage
+    % print ErrorMessage  %
+  pass: $Module 
+  % print check successful %
 

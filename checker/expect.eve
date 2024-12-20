@@ -1,22 +1,46 @@
+use main.set
 
-priv struct RangeStruct
+pub struct RangeStruct
   u64 MaxPositive
   i64 MaxNegative
 
-priv enum ValueEnum
+pub enum ValueEnum
   u64 PositiveValue
   i64 NegativeValue
 
 pub enum BlockVariant
+  vec[str] StatementBlock
   vec[str] ConditionalBlock
   RangeStruct RangeBlock
   ValueEnum ValueBlock
   BlockVariants RuntimeBlock 
 
-pub fn next(vec[str] Sentence) --> BlockVariant 
+pub fn Next(vec[str] Sentence) --> BlockVariant 
 
 
+pub fn Validate(vec[str] Sentence) --> bool 
+
+
+pub fn TraverseBlocks(vec[str] Sentence, u32 Index)--> str 
+
+
+pub fn LevelTraversal(vec[str] Sentence, u32 Index, str BlockName)--> str
+
+
+pub fn BlockValue(vec[str] Sentence, u32 Index, str BlockName)--> str
 
 
 exposure category 
-pub|priv alias|enum|struct|fn 
+pub|priv alias|enum|struct|fn w0 w1 .....
+
+pub|priv const 
+
+w0 = type
+
+w1 = consttypedef
+
+w2 = = 
+
+w3 = value
+
+type=

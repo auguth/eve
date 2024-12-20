@@ -1,0 +1,5 @@
+
+pub alias Set
+
+pub fn New(T)--> Set
+pub fn Push(Set)--> Set

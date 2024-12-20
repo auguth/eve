@@ -1,0 +1,36 @@
+  Todo
+  -----
+
+  const
+  alias 
+  enum
+  struct
+  fn sig 
+  fn body 
+  make 
+  asgn
+  oper
+  to 
+  as 
+  of 
+  cond 
+  mtch
+  call pass fail some none
+  recr pass fail some none
+  thrw none 
+  thrw error
+  thrw typedef
+  heap
+  set
+  map
+  table
+  disk
+  evequery
+  all assigned?
+  inner/outer scope
+  compile conditions if amd64|arm64...etc
+  inlines (macros)
+  use (affects all previous) 
+    - git 
+    - local
+  call modfn
